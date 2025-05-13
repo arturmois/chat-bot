@@ -17,7 +17,6 @@ export class CustomerRepositoryDatabase implements CustomerRepository {
     async save(customer: Customer): Promise<void> {
         await this.prisma.customer.create({
             data: {
-                id: customer.getId(),
                 push_name: customer.getPushName(),
                 phone_number: customer.getPhoneNumber(),
                 instance_key: customer.getInstanceKey(),

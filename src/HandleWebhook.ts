@@ -23,6 +23,7 @@ export default class HandleWebhook {
     async execute(input: Input) {
         let customer = await this.customerRepository.findByNumber(input.number);
         if (!customer) {
+            console.log("Customer not found, creating new customer");
             customer = Customer.create(input.pushName, input.number, input.instanceKey);
             await this.customerRepository.save(customer);
             await this.handleMessage(customer, input);
