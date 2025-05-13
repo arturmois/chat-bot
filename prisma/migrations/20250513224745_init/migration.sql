@@ -4,7 +4,7 @@ CREATE TABLE "Customer" (
     "push_name" TEXT NOT NULL,
     "phone_number" TEXT NOT NULL,
     "instance_key" TEXT NOT NULL,
-    "message_step" TEXT NOT NULL DEFAULT 'START'
+    "message_step" TEXT NOT NULL DEFAULT 'STEP_0'
 );
 
 -- CreateTable
@@ -24,6 +24,3 @@ CREATE TABLE "Order" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Customer_phone_number_key" ON "Customer"("phone_number");
-
--- CreateIndex
-CREATE UNIQUE INDEX "Customer_instance_key_key" ON "Customer"("instance_key");

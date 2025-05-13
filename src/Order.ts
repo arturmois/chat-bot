@@ -1,33 +1,33 @@
 export default class Order {
-    private id: number;
-    private customerId: number;
-    private productId: number;
-    private quantity: number;
+  private id: number;
+  private customerId: number;
+  private productId: number;
+  private quantity: number;
 
-    constructor(id: number, customerId: number, productId: number, quantity: number) {
-        this.id = id;
-        this.customerId = customerId;
-        this.productId = productId;
-        this.quantity = quantity;
-    }
+  constructor(id: number, customerId: number, productId: number, quantity: number) {
+    this.id = id;
+    this.customerId = customerId;
+    this.productId = productId;
+    this.quantity = quantity;
+  }
 
-    static create(customerId: number, productId: number, quantity: number) {
-        return new Order(0, customerId, productId, quantity);
-    }
+  static create(customerId: number, productId: number, quantity: number) {
+    return new Order(0, customerId, productId, quantity);
+  }
 
-    getId() {
-        return this.id;
-    }
+  getId() {
+    return this.id;
+  }
 
-    getCustomerId() {
-        return this.customerId;
-    }
+  getCustomerId() {
+    return this.customerId;
+  }
 
-    getProductId() {
-        return this.productId;
-    }
+  getProductId() {
+    return this.productId;
+  }
 
-    getQuantity() {
-        return this.quantity;
-    }
+  getQuantity() {
+    return this.quantity;
+  }
 }

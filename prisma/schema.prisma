@@ -12,11 +12,12 @@ datasource db {
 }
 
 enum MessageStep {
-  START
-  LIST_PRODUCTS
-  SELECT_PRODUCT
-  PRODUCT_QUANTITY
-  ADD_MORE_PRODUCTS
+  STEP_0
+  STEP_1
+  STEP_2
+  STEP_3
+  STEP_4
+  STEP_5
 }
 
 model Customer {
@@ -24,7 +25,7 @@ model Customer {
   push_name    String
   phone_number String      @unique
   instance_key String
-  message_step MessageStep @default(START)
+  message_step MessageStep @default(STEP_0)
 }
 
 model Product {
