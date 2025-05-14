@@ -3,7 +3,7 @@ import Chat from "../src/Chat";
 test("Should realize transition between steps", () => {
   const phoneNumber = "558381974276";
   const instanceKey = "B000";
-  const chat = new Chat(phoneNumber, instanceKey);
+  const chat = Chat.create(phoneNumber, instanceKey);
   expect(chat.getStep()).toBe("STEP_0");
   expect(chat.phoneNumber).toBe(phoneNumber);
   expect(chat.instanceKey).toBe(instanceKey);

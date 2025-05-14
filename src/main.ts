@@ -1,24 +1,20 @@
 import express, { Request, Response } from "express";
 import HandleWebhook from "./HandleWebhook";
 import Mediator from "./Mediator";
-import Customer from "./Customer";
+import Chat from "./Chat";
+import { ChatRepositoryDatabase } from "./ChatRepository";
 import { WhatsappAdapter } from "./WhatsappService";
-import { CustomerRepositoryDatabase } from "./CustomerRepository";
-import { ProductRepositoryDatabase } from "./ProductRepository";
-import { OrderRepositoryDatabase } from "./OrderRepository";
 const app = express();
 app.use(express.json());
 
-Mediator.getInstance().register("customer", (customer: Customer) => {
-
+const whatsappService = new WhatsappAdapter();
+Mediator.getInstance().register("chat", (event: any) => {
+  whatsappService.sendTextMessage(event.phoneNumber, event.message, event.instanceKey);
 });
 
 app.post("/", async (req: Request, res: Response) => {
-  const customerRepository = new CustomerRepositoryDatabase();
-  const productRepository = new ProductRepositoryDatabase();
-  const orderRepository = new OrderRepositoryDatabase();
-  const whatsappService = new WhatsappAdapter();
-  const handleWebhook = new HandleWebhook(customerRepository, productRepository, orderRepository, whatsappService);
+  const chatRepository = new ChatRepositoryDatabase();
+  const handleWebhook = new HandleWebhook(chatRepository);
   const data = req.body;
   const input = {
     number: data.body.key.remoteJid.split("@")[0],

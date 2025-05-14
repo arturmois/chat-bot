@@ -1,12 +1,25 @@
 import Item from "./Item";
+import { MessageStep } from "../generated/prisma";
+import Mediator from "./Mediator";
 
 export default class Chat {
-  private step: string;
+  private id: number;
+  private step: MessageStep;
   private cart: Item[];
 
-  constructor(readonly phoneNumber: string, readonly instanceKey: string) {
-    this.step = "STEP_0";
+  constructor(id: number, readonly phoneNumber: string, readonly instanceKey: string, messageStep: MessageStep) {
+    this.id = id;
+    this.step = messageStep;
     this.cart = [];
+  }
+
+  static create(phoneNumber: string, instanceKey: string) {
+    const step = MessageStep.STEP_0;
+    return new Chat(0, phoneNumber, instanceKey, step);
+  }
+
+  getId() {
+    return this.id;
   }
 
   getStep() {
@@ -46,10 +59,11 @@ export default class Chat {
   }
 
   sendProductListMessage(productList: string[]) {
-    if (!this.validateStep("STEP_2") && !this.validateStep("STEP_5")) return;
-    const message = `Lista de produtos: \n${productList.join("\n")}`;
-    this.sendMessage(message);
-    this.step = "STEP_3";
+    if (this.validateStep("STEP_2") || this.validateStep("STEP_4")) {
+      const message = `Lista de produtos: \n${productList.join("\n")}`;
+      this.sendMessage(message);
+      this.step = "STEP_3";
+    }
   }
 
   addToCart(productId: string) {
@@ -59,7 +73,7 @@ export default class Chat {
 
   sendProductConfirmationMessage() {
     if (!this.validateStep("STEP_3")) return;
-    const message = `Você deseja comprar o produto?`;
+    const message = `Você deseja comprar o produto? \n1 - Sim \n2 - Não`;
     this.sendMessage(message);
     this.step = "STEP_4";
   }
@@ -68,7 +82,7 @@ export default class Chat {
     if (!this.validateStep("STEP_4")) return;
     const message = `Você deseja adicionar um novo produto? \n1 - Sim \n2 - Não`;
     this.sendMessage(message);
-    this.step = "STEP_3";
+    this.step = "STEP_5";
   }
 
   sendCartSummary() {
@@ -81,6 +95,10 @@ export default class Chat {
   }
 
   sendMessage(message: string) {
-    console.log(message);
+    Mediator.getInstance().notify("chat", {
+      phoneNumber: this.phoneNumber,
+      message: message,
+      instanceKey: this.instanceKey,
+    });
   }
 }

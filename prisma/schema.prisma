@@ -20,9 +20,8 @@ enum MessageStep {
   STEP_5
 }
 
-model Customer {
+model Chat {
   id           Int         @id @default(autoincrement())
-  push_name    String
   phone_number String      @unique
   instance_key String
   message_step MessageStep @default(STEP_0)
