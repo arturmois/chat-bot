@@ -6,11 +6,13 @@ export default class Chat {
   private id: number;
   private step: MessageStep;
   private cart: Item[];
+  private productSelected: string;
 
   constructor(id: number, readonly phoneNumber: string, readonly instanceKey: string, messageStep: MessageStep) {
     this.id = id;
     this.step = messageStep;
     this.cart = [];
+    this.productSelected = "";
   }
 
   static create(phoneNumber: string, instanceKey: string) {
@@ -59,11 +61,10 @@ export default class Chat {
   }
 
   sendProductListMessage(productList: string[]) {
-    if (this.validateStep("STEP_2") || this.validateStep("STEP_4")) {
-      const message = `Lista de produtos: \n${productList.join("\n")}`;
-      this.sendMessage(message);
-      this.step = "STEP_3";
-    }
+    if (this.step !== "STEP_2" && this.step !== "STEP_5") return;
+    const message = `Lista de produtos: \n${productList.join("\n")}`;
+    this.sendMessage(message);
+    this.step = "STEP_3";
   }
 
   addToCart(productId: string) {

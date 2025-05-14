@@ -23,5 +23,5 @@ test("Should realize transition between steps", () => {
   expect(chat.getStep()).toBe("STEP_4");
 
   chat.sendNewProductQuestionMessage();
-  expect(chat.getStep()).toBe("STEP_3");
+  expect(chat.getStep()).toBe("STEP_5");
 });

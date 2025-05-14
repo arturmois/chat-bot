@@ -2,12 +2,9 @@ import Chat from "./Chat";
 import ChatRepository from "./ChatRepository";
 
 export default class HandleWebhook {
-
-
   private chatRepository: ChatRepository;
 
   constructor(chatRepository: ChatRepository) {
-
     this.chatRepository = chatRepository;
   }
 
@@ -50,6 +47,16 @@ export default class HandleWebhook {
       return;
     }
     if (chat.getStep() === "STEP_4") {
+      if (input.message === "1") {
+        chat.sendNewProductQuestionMessage();
+      }
+      if (input.message === "2") {
+        chat.sendCartSummary();
+      }
+      await this.chatRepository.update(chat);
+      return;
+    }
+    if (chat.getStep() === "STEP_5") {
       if (input.message === "1") {
         chat.sendProductListMessage(productList);
       }
