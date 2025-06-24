@@ -1,7 +1,7 @@
 import { MenuRepository } from '../../domain/repositories/MenuRepository';
 import { MenuItem } from '../../domain/entities/MenuItem';
 
-export class InMemoryMenuRepository implements MenuRepository {
+export default class InMemoryMenuRepository implements MenuRepository {
   private menuItems: MenuItem[] = [
     MenuItem.create('1', 'Pizza Margherita', 'Pizza tradicional com molho de tomate, mussarela e manjericão', 35.90, 'Pizzas', true, 'https://via.placeholder.com/150'),
     MenuItem.create('2', 'Pizza Pepperoni', 'Pizza com molho de tomate, mussarela e pepperoni', 42.90, 'Pizzas', true, 'https://via.placeholder.com/150'),

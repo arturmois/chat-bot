@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { ProcessMessageUseCase } from '../../../application/usecases/ProcessMessageUseCase';
+import { ProcessMessageUseCase } from '../../../application/usecases/ProcessMessage';
 
 export interface WebhookPayload {
   phone: string;
@@ -13,9 +13,10 @@ export class WebhookController {
 
   async handleWebhook(req: Request, res: Response): Promise<void> {
     try {
-      const payload = req.body as WebhookPayload;
-
-      // Validar payload
+      const payload = {
+        message: req.body.Body,
+        phone: req.body.WaId,
+      } as WebhookPayload;
       if (!this.isValidPayload(payload)) {
         res.status(400).json({
           success: false,
@@ -23,13 +24,10 @@ export class WebhookController {
         });
         return;
       }
-
-      // Processar mensagem
       const result = await this.processMessageUseCase.execute({
         phoneNumber: payload.phone,
         message: payload.message
       });
-
       if (result.success) {
         res.status(200).json({
           success: true,

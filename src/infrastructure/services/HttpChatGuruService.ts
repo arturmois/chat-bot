@@ -1,17 +1,17 @@
 import axios, { AxiosInstance } from 'axios';
-import { ChatGuruService, ChatGuruMessage, ChatGuruResponse } from '../../domain/services/ChatGuruService';
+import { ChatWhatsAppService, ChatWhatsAppMessage, ChatWhatsAppResponse } from '../../domain/services/ChatWhatsAppService';
 
-export interface ChatGuruConfig {
+export interface ChatWhatsAppConfig {
   apiUrl: string;
   apiKey: string;
   accountId: string;
   phoneId: string;
 }
 
-export class HttpChatGuruService implements ChatGuruService {
+export class HttpChatWhatsAppService implements ChatWhatsAppService {
   private httpClient: AxiosInstance;
 
-  constructor(private config: ChatGuruConfig) {
+  constructor(private config: ChatWhatsAppConfig) {
     this.httpClient = axios.create({
       baseURL: config.apiUrl,
       timeout: 10000,
@@ -21,7 +21,7 @@ export class HttpChatGuruService implements ChatGuruService {
     });
   }
 
-  async sendMessage(message: ChatGuruMessage): Promise<ChatGuruResponse> {
+  async sendMessage(message: ChatWhatsAppMessage): Promise<ChatWhatsAppResponse> {
     try {
       const params = new URLSearchParams({
         key: this.config.apiKey,
@@ -59,7 +59,7 @@ export class HttpChatGuruService implements ChatGuruService {
     }
   }
 
-  async getMessageStatus(messageId: string): Promise<ChatGuruResponse> {
+  async getMessageStatus(messageId: string): Promise<ChatWhatsAppResponse> {
     try {
       const params = new URLSearchParams({
         key: this.config.apiKey,

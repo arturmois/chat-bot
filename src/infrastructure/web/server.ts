@@ -1,18 +1,18 @@
-import express from 'express';
+import express, { Request, Response, type Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 
 // Infrastructure
-import { InMemoryMenuRepository } from '../repositories/InMemoryMenuRepository';
-import { InMemoryChatSessionRepository } from '../repositories/InMemoryChatSessionRepository';
-import { HttpChatGuruService, ChatGuruConfig } from '../services/HttpChatGuruService';
+import InMemoryMenuRepository from '../repositories/InMemoryMenuRepository';
+import InMemoryChatSessionRepository from '../repositories/InMemoryChatSessionRepository';
+import { HttpTwilioService, TwilioConfig } from '../services/HttpTwilioService';
 import { NodemailerEmailService, EmailConfig } from '../services/NodemailerEmailService';
 import { Logger, LoggerConfig } from '../logging/Logger';
 import { createRateLimitMiddleware, RateLimitConfig } from './middlewares/rateLimitMiddleware';
 
 // Application
-import { ProcessMessageUseCase } from '../../application/usecases/ProcessMessageUseCase';
+import { ProcessMessageUseCase } from '../../application/usecases/ProcessMessage';
 
 // Web
 import { WebhookController } from './controllers/WebhookController';
@@ -21,7 +21,7 @@ import { WebhookController } from './controllers/WebhookController';
 dotenv.config();
 
 export class Server {
-  private app: express.Application;
+  private app: Application;
   private logger!: Logger;
   private webhookController!: WebhookController;
 
@@ -54,12 +54,11 @@ export class Server {
     //   password: process.env.FIREBIRD_PASSWORD || 'masterkey'
     // };
 
-    // ChatGuru configuration
-    const chatGuruConfig: ChatGuruConfig = {
-      apiUrl: process.env.CHATGURU_API_URL || '',
-      apiKey: process.env.CHATGURU_API_KEY || '',
-      accountId: process.env.CHATGURU_ACCOUNT_ID || '',
-      phoneId: process.env.CHATGURU_PHONE_ID || ''
+    // Twilio configuration
+    const twilioConfig: TwilioConfig = {
+      accountSid: process.env.TWILIO_ACCOUNT_SID || '',
+      authToken: process.env.TWILIO_AUTH_TOKEN || '',
+      phoneNumber: process.env.TWILIO_PHONE_NUMBER || ''
     };
 
     // Email configuration
@@ -77,14 +76,14 @@ export class Server {
     const sessionRepository = new InMemoryChatSessionRepository();
 
     // Services
-    const chatGuruService = new HttpChatGuruService(chatGuruConfig);
+    const twilioService = new HttpTwilioService(twilioConfig);
     const emailService = new NodemailerEmailService(emailConfig);
 
     // Use Cases
     const processMessageUseCase = new ProcessMessageUseCase(
       sessionRepository,
       menuRepository,
-      chatGuruService,
+      twilioService,
       emailService,
       parseInt(process.env.SESSION_TIMEOUT_MS || '1800000') // 30 minutos
     );
@@ -111,6 +110,10 @@ export class Server {
   }
 
   private setupMiddlewares(): void {
+    // Trust proxy configuration - necessário para express-rate-limit funcionar corretamente
+    // quando a aplicação está atrás de um proxy (Docker, Nginx, load balancer, etc.)
+    this.app.set('trust proxy', 1);
+
     // Security
     this.app.use(helmet());
 
@@ -137,7 +140,7 @@ export class Server {
 
   private setupRoutes(): void {
     // Health check
-    this.app.get('/health', (req, res) => {
+    this.app.get('/health', (_: Request, res: Response) => {
       res.json({
         status: 'ok',
         timestamp: new Date().toISOString(),
@@ -146,12 +149,12 @@ export class Server {
     });
 
     // Webhook route
-    this.app.post('/webhook', (req, res) => {
+    this.app.post('/webhook', (req: Request, res: Response) => {
       this.webhookController.handleWebhook(req, res);
     });
 
     // 404 handler
-    this.app.use('*', (req, res) => {
+    this.app.use('*', (_: Request, res: Response) => {
       res.status(404).json({
         success: false,
         error: 'Endpoint não encontrado'
@@ -161,7 +164,7 @@ export class Server {
 
   private setupErrorHandling(): void {
     // Global error handler
-    this.app.use((error: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    this.app.use((error: Error, _: Request, res: Response) => {
       this.logger.error('Erro não tratado', error);
 
       res.status(500).json({

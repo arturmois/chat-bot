@@ -3,7 +3,7 @@ import { Customer, Address } from '../../domain/entities/Customer';
 import { Order, PaymentMethod } from '../../domain/entities/Order';
 import { ChatSessionRepository } from '../../domain/repositories/ChatSessionRepository';
 import { MenuRepository } from '../../domain/repositories/MenuRepository';
-import { ChatGuruService } from '../../domain/services/ChatGuruService';
+import type { ChatWhatsAppService } from '../../domain/services/ChatWhatsAppService';
 import { EmailService } from '../../domain/services/EmailService';
 
 export interface ProcessMessageRequest {
@@ -21,7 +21,7 @@ export class ProcessMessageUseCase {
   constructor(
     private chatSessionRepository: ChatSessionRepository,
     private menuRepository: MenuRepository,
-    private chatGuruService: ChatGuruService,
+    private chatWhatsAppService: ChatWhatsAppService,
     private emailService: EmailService,
     private sessionTimeoutMs: number = 30 * 60 * 1000 // 30 minutos
   ) { }
@@ -29,28 +29,21 @@ export class ProcessMessageUseCase {
   async execute(request: ProcessMessageRequest): Promise<ProcessMessageResponse> {
     try {
       let session = await this.chatSessionRepository.findByPhoneNumber(request.phoneNumber);
-
-      // Verificar se a sessão expirou
       if (session && session.isExpired(this.sessionTimeoutMs)) {
         await this.chatSessionRepository.delete(request.phoneNumber);
         session = null;
       }
-
-      // Criar nova sessão se não existir
       if (!session) {
         session = ChatSession.create(request.phoneNumber);
       }
-
       const response = await this.processMessage(session, request.message);
       await this.chatSessionRepository.save(response.session);
-
       if (response.message) {
-        await this.chatGuruService.sendMessage({
+        await this.chatWhatsAppService.sendMessage({
           chatNumber: request.phoneNumber,
           text: response.message
         });
       }
-
       return {
         success: true,
         response: response.message ?? ''
@@ -81,6 +74,9 @@ export class ProcessMessageUseCase {
 
       case ChatState.ADDING_ITEMS:
         return this.handleAddingItems(session, normalizedMessage);
+
+      case ChatState.ASK_TO_ADD_MORE_ITEMS:
+        return this.handleAskToAddMoreItems(session, normalizedMessage);
 
       case ChatState.COLLECTING_CUSTOMER_DATA:
         return this.handleCollectingCustomerData(session, message);
@@ -280,42 +276,6 @@ Enquanto isso, você pode:
       return this.startNewOrder(session);
     }
 
-    // Handle options after adding an item
-    if (message === '1' && session.context.currentCategory) {
-      // Continue adding items from same category
-      const items = await this.menuRepository.findItemsByCategory(session.context.currentCategory);
-      let itemsMessage = `🍽️ *${session.context.currentCategory.toUpperCase()}*\n\n`;
-
-      items.forEach((item, index) => {
-        itemsMessage += `*${index + 1}* - ${item.getDisplayText()}\n\n`;
-      });
-
-      itemsMessage += '*0* - Voltar às categorias';
-
-      return {
-        session,
-        message: itemsMessage
-      };
-    }
-
-    if (message === '2') {
-      // Choose another category
-      return this.startNewOrder(session);
-    }
-
-    if (message === '3') {
-      // Finalize order - start collecting customer data
-      const selectedItems = session.context.selectedItems || [];
-      if (selectedItems.length === 0) {
-        return this.startNewOrder(session);
-      }
-
-      return {
-        session: session.updateState(ChatState.COLLECTING_CUSTOMER_DATA),
-        message: '👤 *Dados do cliente*\n\nPor favor, informe seu nome completo:'
-      };
-    }
-
     if (!session.context.currentCategory) {
       return this.startNewOrder(session);
     }
@@ -338,7 +298,12 @@ ${selectedItem.getDisplayText()}
 *0* - Cancelar pedido`;
 
       return {
-        session: session.updateContext({ selectedItems: updatedItems }),
+        session: session
+          .updateState(ChatState.ASK_TO_ADD_MORE_ITEMS)
+          .updateContext({
+            selectedItems: updatedItems,
+            currentCategory: session.context.currentCategory // Manter a categoria atual
+          }),
         message: confirmMessage
       };
     }
@@ -347,6 +312,59 @@ ${selectedItem.getDisplayText()}
       session,
       message: 'Item inválido. Por favor, escolha um número válido.'
     };
+  }
+
+  private async handleAskToAddMoreItems(session: ChatSession, message: string): Promise<{
+    session: ChatSession;
+    message: string;
+  }> {
+    switch (message) {
+      case '1':
+        // Continue adding items from same category
+        if (!session.context.currentCategory) {
+          return this.startNewOrder(session);
+        }
+
+        const items = await this.menuRepository.findItemsByCategory(session.context.currentCategory);
+        let itemsMessage = `🍽️ *${session.context.currentCategory.toUpperCase()}*\n\n`;
+
+        items.forEach((item, index) => {
+          itemsMessage += `*${index + 1}* - ${item.getDisplayText()}\n\n`;
+        });
+
+        itemsMessage += '*0* - Voltar às categorias';
+
+        return {
+          session: session.updateState(ChatState.ADDING_ITEMS),
+          message: itemsMessage
+        };
+
+      case '2':
+        // Choose another category
+        return this.startNewOrder(session);
+
+      case '3':
+        // Finalize order - start collecting customer data
+        const selectedItems = session.context.selectedItems || [];
+        if (selectedItems.length === 0) {
+          return this.startNewOrder(session);
+        }
+
+        return {
+          session: session.updateState(ChatState.COLLECTING_CUSTOMER_DATA),
+          message: '👤 *Dados do cliente*\n\nPor favor, informe seu nome completo:'
+        };
+
+      case '0':
+        // Cancel order
+        return this.startNewOrder(session);
+
+      default:
+        return {
+          session,
+          message: 'Opção inválida. Por favor, escolha:\n*1* - Adicionar mais itens desta categoria\n*2* - Escolher outra categoria\n*3* - Finalizar pedido\n*0* - Cancelar pedido'
+        };
+    }
   }
 
   private async handleCollectingCustomerData(session: ChatSession, message: string): Promise<{

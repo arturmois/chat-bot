@@ -85,7 +85,11 @@ export class Order {
       throw new Error('Quantidade deve ser maior que zero');
     }
 
-    const newItems = [...this.items, { menuItem, quantity, observations }];
+    const newItem: OrderItem = observations
+      ? { menuItem, quantity, observations }
+      : { menuItem, quantity };
+
+    const newItems = [...this.items, newItem];
     const newTotalAmount = Order.calculateTotalAmount(newItems) + this.deliveryFee;
 
     return new Order(

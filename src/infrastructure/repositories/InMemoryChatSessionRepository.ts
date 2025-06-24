@@ -1,7 +1,7 @@
 import { ChatSessionRepository } from '../../domain/repositories/ChatSessionRepository';
 import { ChatSession } from '../../domain/entities/ChatSession';
 
-export class InMemoryChatSessionRepository implements ChatSessionRepository {
+export default class InMemoryChatSessionRepository implements ChatSessionRepository {
   private sessions: Map<string, ChatSession> = new Map();
 
   async save(session: ChatSession): Promise<void> {
