@@ -1,90 +1,373 @@
-# Chat Bot
+# ChatGuru API - Sistema de Pedidos por WhatsApp
 
-A WhatsApp-based chat bot application built with Node.js, Express, and Prisma. This project integrates with the [WhatsApp Hard API](https://github.com/renatoiub/whatsapp-hard-api-node) for WhatsApp messaging functionality.
+API completa para integração com ChatGuru, permitindo que clientes façam pedidos através do WhatsApp com fluxo conversacional inteligente.
 
-## Prerequisites
+## 🚀 Características
 
-- Node.js (v18 or higher recommended)
-- npm (comes with Node.js)
-- SQLite (for database)
-- WhatsApp Hard API instance running (default: http://localhost:3333)
+- **Integração ChatGuru**: Comunicação bidirecional via webhooks
+- **Fluxo Conversacional**: Interface intuitiva por mensagens
+- **Clean Architecture**: Estrutura modular e testável
+- **DDD (Domain Driven Design)**: Modelagem rica do domínio
+- **Banco Firebird**: Integração com sistema legado
+- **Sessões em Memória**: Gerenciamento temporário de conversas
+- **Rate Limiting**: Proteção contra abuso
+- **Email Automático**: Confirmações e atualizações de pedidos
+- **Logs Estruturados**: Monitoramento completo
+- **Docker Ready**: Containerização simplificada
 
-## Installation
+## 🏗️ Arquitetura
 
-1. Clone the repository:
-```bash
-git clone https://github.com/arturmois/chat-bot.git
-cd chat-bot
+```
+src/
+├── domain/                 # Regras de negócio
+│   ├── entities/          # Entidades do domínio
+│   ├── repositories/      # Interfaces dos repositórios
+│   └── services/          # Interfaces dos serviços
+├── application/           # Casos de uso
+│   └── usecases/         # Lógica de aplicação
+└── infrastructure/        # Implementações
+    ├── repositories/      # Repositórios concretos
+    ├── services/         # Serviços concretos
+    ├── web/              # Controllers e middlewares
+    └── logging/          # Sistema de logs
 ```
 
-2. Install dependencies:
+## 📋 Fluxo de Pedidos
+
+1. **Boas-vindas**: Mensagem inicial com opções
+2. **Menu Principal**: Navegação por categorias
+3. **Seleção de Itens**: Adição ao carrinho
+4. **Dados do Cliente**: Coleta de informações
+5. **Endereço**: Dados para entrega
+6. **Pagamento**: Seleção da forma de pagamento
+7. **Confirmação**: Revisão final do pedido
+8. **Email**: Confirmação automática por email
+
+## 🛠️ Instalação
+
+### Pré-requisitos
+
+- Node.js 18+
+- Banco Firebird
+- Conta ChatGuru com API ativada
+- Servidor SMTP para emails
+
+### 1. Clone o repositório
+
+```bash
+git clone <repository-url>
+cd chatguru-api
+```
+
+### 2. Instale as dependências
+
 ```bash
 npm install
 ```
 
-3. Set up environment variables:
-Create a `.env` file in the root directory with the following content:
-```
-DATABASE_URL="file:./dev.db"
-```
+### 3. Configure o ambiente
 
-4. Initialize the database:
 ```bash
-npx prisma generate
-npx prisma db push
+cp env.example .env
 ```
 
-5. Configure WhatsApp Hard API:
-Make sure you have the WhatsApp Hard API running and update the following configuration in `src/WhatsappService.ts`:
-- `BASE_URL`: The URL where your WhatsApp Hard API is running
-- `ADMIN_TOKEN`: Your WhatsApp Hard API admin token
-- `BEARER_TOKEN`: Your WhatsApp Hard API bearer token
+Edite o arquivo `.env` com suas configurações:
 
-## Running the Application
+```env
+# Servidor
+PORT=3000
+NODE_ENV=development
 
-### Development Mode
-To run the application in development mode with hot-reload:
+# ChatGuru
+CHATGURU_API_URL=https://app.zap.guru/api/v1
+CHATGURU_API_KEY=sua_chave_api
+CHATGURU_ACCOUNT_ID=seu_account_id
+CHATGURU_PHONE_ID=seu_phone_id
+
+# Firebird
+FIREBIRD_HOST=localhost
+FIREBIRD_PORT=3050
+FIREBIRD_DATABASE=/caminho/para/database.fdb
+FIREBIRD_USER=sysdba
+FIREBIRD_PASSWORD=masterkey
+
+# Email
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=seu_email@gmail.com
+SMTP_PASSWORD=sua_senha_app
+EMAIL_FROM=seu_email@gmail.com
+
+# Rate Limiting
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+
+# Sessões
+SESSION_TIMEOUT_MS=1800000
+```
+
+### 4. Configure o banco de dados
+
+Execute o script SQL no seu banco Firebird:
+
 ```bash
+# Conecte ao seu banco Firebird e execute:
+# database/schema.sql
+```
+
+### 5. Compile e execute
+
+```bash
+# Desenvolvimento
 npm run dev
-```
 
-### Production Mode
-To build and run the application in production mode:
-```bash
+# Produção
 npm run build
 npm start
 ```
 
-## Testing
-Run the test suite:
+## 🐳 Docker
+
+### Build da imagem
+
 ```bash
-npm test
+npm run docker:build
 ```
 
-## Project Structure
+### Executar container
 
-- `src/` - Source code directory
-  - `WhatsappService.ts` - WhatsApp Hard API integration
-  - `HandleWebhook.ts` - Webhook handler for incoming messages
-  - Other core business logic files
-- `prisma/` - Database schema and migrations
-- `test/` - Test files
-- `generated/` - Generated Prisma client
+```bash
+npm run docker:run
+```
 
-## Database Schema
+### Docker Compose (opcional)
 
-The application uses SQLite with the following main models:
-- Customer: Stores customer information and chat state
-- Product: Product catalog
-- Order: Customer orders
+```yaml
+version: '3.8'
+services:
+  chatguru-api:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      # ... outras variáveis do .env
+    restart: unless-stopped
+```
 
-## WhatsApp Integration
+## 📡 Configuração do ChatGuru
 
-This project uses the WhatsApp Hard API for sending and receiving WhatsApp messages. The integration is handled through the `WhatsappService` class which provides methods for:
-- Sending text messages
-- Handling incoming webhooks
-- Managing customer conversations
+### 1. Ative a API no ChatGuru
 
-## License
+- Acesse sua conta ChatGuru
+- Vá em Configurações > API
+- Solicite ativação da API
+- Anote as credenciais fornecidas
 
-ISC
+### 2. Configure o Webhook
+
+No ChatGuru, configure o webhook para:
+```
+URL: https://seu-dominio.com/webhook
+Método: POST
+```
+
+### 3. Formato do Webhook
+
+O ChatGuru enviará dados no formato:
+
+```json
+{
+  "phone": "5511999999999",
+  "message": "Texto da mensagem",
+  "from": "nome_do_contato",
+  "type": "text"
+}
+```
+
+## 🔧 API Endpoints
+
+### GET /health
+Verificação de saúde da aplicação
+
+**Resposta:**
+```json
+{
+  "status": "ok",
+  "timestamp": "2024-01-01T12:00:00.000Z",
+  "uptime": 3600
+}
+```
+
+### POST /webhook
+Recebe mensagens do ChatGuru
+
+**Payload:**
+```json
+{
+  "phone": "5511999999999",
+  "message": "Olá"
+}
+```
+
+**Resposta:**
+```json
+{
+  "success": true,
+  "message": "Mensagem processada com sucesso"
+}
+```
+
+## 📊 Monitoramento
+
+### Logs
+
+Os logs são estruturados em JSON e incluem:
+
+- Requisições HTTP
+- Erros de aplicação
+- Processos de negócio
+- Métricas de performance
+
+### Health Check
+
+```bash
+curl http://localhost:3000/health
+```
+
+### Rate Limiting
+
+- Limite padrão: 100 requisições por 15 minutos
+- Headers de controle incluídos na resposta
+- Mensagens de erro personalizadas
+
+## 🔒 Segurança
+
+- **Helmet**: Headers de segurança HTTP
+- **CORS**: Controle de origem
+- **Rate Limiting**: Proteção contra abuso
+- **Validação**: Sanitização de entrada
+- **Logs**: Auditoria completa
+
+## 📝 Desenvolvimento
+
+### Estrutura de Camadas
+
+**Domain (Domínio)**
+- Entidades com regras de negócio
+- Interfaces de repositórios e serviços
+- Zero dependências externas
+
+**Application (Aplicação)**
+- Casos de uso (Use Cases)
+- Orquestração de processos
+- Lógica de aplicação
+
+**Infrastructure (Infraestrutura)**
+- Implementações concretas
+- Integrações externas
+- Detalhes técnicos
+
+### Testes
+
+```bash
+# Executar testes
+npm test
+
+# Testes em modo watch
+npm run test:watch
+```
+
+### Padrões de Código
+
+- TypeScript strict mode
+- ESLint para qualidade
+- Prettier para formatação
+- Conventional Commits
+
+## 🚀 Melhorias Sugeridas
+
+### Funcionalidades Básicas
+
+1. **Sistema de Cupons**
+   - Desconto por código
+   - Promoções especiais
+   - Fidelidade do cliente
+
+2. **Rastreamento de Pedidos**
+   - Status em tempo real
+   - Integração com entregadores
+   - Notificações automáticas
+
+3. **Avaliações**
+   - Feedback pós-entrega
+   - Sistema de notas
+   - Comentários dos clientes
+
+4. **Programa de Fidelidade**
+   - Pontos por compra
+   - Recompensas
+   - Níveis de cliente
+
+### Funcionalidades Avançadas
+
+5. **Analytics Avançado**
+   - Dashboard de métricas
+   - Relatórios de vendas
+   - Análise de comportamento
+
+6. **Integrações**
+   - Sistemas de pagamento (PIX, cartão)
+   - ERPs existentes
+   - Sistemas de delivery
+
+7. **IA e Automação**
+   - Chatbot mais inteligente
+   - Recomendações personalizadas
+   - Processamento de linguagem natural
+
+8. **Multi-tenant**
+   - Suporte a múltiplos restaurantes
+   - Configurações independentes
+   - Dashboard centralizado
+
+### Melhorias Técnicas
+
+9. **Cache Inteligente**
+   - Redis para sessões
+   - Cache de menu
+   - Invalidação automática
+
+10. **Base de Dados**
+    - Migração para PostgreSQL
+    - Backup automático
+    - Réplicas de leitura
+
+11. **Observabilidade**
+    - Métricas Prometheus
+    - Traces distribuídos
+    - Alertas automatizados
+
+12. **Escalabilidade**
+    - Load balancer
+    - Horizontal scaling
+    - Message queues
+
+## 📞 Suporte
+
+Para dúvidas sobre:
+
+- **API**: Consulte a documentação do ChatGuru
+- **Banco Firebird**: Documentação oficial Firebird
+- **Configuração**: Verifique os logs da aplicação
+- **Desenvolvimento**: Issues no repositório
+
+## 📄 Licença
+
+MIT License - veja o arquivo LICENSE para detalhes.
+
+---
+
+**Desenvolvido com ❤️ para automatizar pedidos via WhatsApp** 
