@@ -1,5 +1,5 @@
 {
-  "name": "chatguru-api",
+  "name": "chatbot-api",
   "version": "1.0.0",
   "description": "API para integração com ChatGuru para pedidos de restaurante",
   "main": "dist/infrastructure/web/server.js",
@@ -9,8 +9,8 @@
     "dev": "ts-node-dev --respawn --transpile-only src/infrastructure/web/server.ts",
     "test": "jest",
     "test:watch": "jest --watch",
-    "docker:build": "docker build -t chatguru-api .",
-    "docker:run": "docker run -p 3000:3000 chatguru-api"
+    "docker:build": "docker build -t chatbot-api .",
+    "docker:run": "docker run -p 3000:3000 --env-file .env -d chatbot-api"
   },
   "dependencies": {
     "axios": "^1.6.2",
