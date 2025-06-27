@@ -16,7 +16,7 @@ export const createRateLimitMiddleware = (config: RateLimitConfig) => {
     },
     standardHeaders: true,
     legacyHeaders: false,
-    handler: (req, res) => {
+    handler: (_: any, res: any) => {
       res.status(429).json({
         success: false,
         error: 'Muitas requisições. Tente novamente mais tarde.',

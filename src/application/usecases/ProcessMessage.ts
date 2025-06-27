@@ -407,7 +407,14 @@ ${selectedItem.getDisplayText()}
         };
 
       default:
-        return this.handleCollectingCustomerData(session.updateContext({}), message);
+        // Reset the customer data collection process
+        return {
+          session: session.updateContext({
+            awaitingField: 'name',
+            customerData: {}
+          }),
+          message: '👤 *Dados do cliente*\n\nPor favor, informe seu nome completo:'
+        };
     }
   }
 
